@@ -7,7 +7,6 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from groq import Groq
 import fitz
-from PIL import Image
 
 # Configuración del cliente
 client = Groq(api_key=os.environ.get('api_key_groq'))
@@ -20,10 +19,10 @@ def sacar_texto(ruta):
         texto += pagina.get_text()
     return texto
 
-def resumir_texto(texto_entrada, client, nombre_modelo):
+def resumir_texto(texto_entrada, client):
     try:
         completion = client.chat.completions.create(
-            model=nombre_modelo,
+            model="llama3-8b-8192",
             messages=[
                 {
                     "role": "user",
@@ -35,10 +34,10 @@ def resumir_texto(texto_entrada, client, nombre_modelo):
     except Exception as e:
         return f"Error: {str(e)}"
 
-def preguntar(fichero_tema, pregunta, client, nombre_modelo):
+def preguntar(fichero_tema, pregunta, client):
     try:
         completion = client.chat.completions.create(
-            model=nombre_modelo,
+            model="llama3-8b-8192",
             messages=[
                 {
                     "role": "user",
@@ -81,18 +80,6 @@ class PdfBotApp(QWidget):
         self.text_preview.setReadOnly(True)
         layout.addWidget(self.text_preview)
 
-        # Selección de modelo
-        self.model_label = QLabel("Selecciona un modelo:")
-        layout.addWidget(self.model_label)
-
-        self.model_dropdown = QComboBox()
-        self.model_dropdown.addItems([
-            "llama3-70b-8192", "llama3-8b-8192", 
-            "llama-3.1-8b-instant", "gemma2-9b-it", 
-            "mixtral-8x7b-32768"
-        ])
-        layout.addWidget(self.model_dropdown)
-
         # Botón para resumir
         self.summarize_button = QPushButton("Resumir Texto")
         self.summarize_button.clicked.connect(self.summarize_text)
@@ -128,8 +115,7 @@ class PdfBotApp(QWidget):
 
     def summarize_text(self):
         if hasattr(self, 'texto_pdf'):
-            modelo = self.model_dropdown.currentText()
-            resumen = resumir_texto(self.texto_pdf, client, modelo)
+            resumen = resumir_texto(self.texto_pdf, client)
             self.summary_output.setPlainText(resumen)
         else:
             self.summary_output.setPlainText("Por favor, carga un PDF primero.")
@@ -137,8 +123,7 @@ class PdfBotApp(QWidget):
     def ask_question(self):
         if hasattr(self, 'texto_pdf'):
             pregunta = self.question_input.text()
-            modelo = self.model_dropdown.currentText()
-            respuesta = preguntar(self.texto_pdf, pregunta, client, modelo)
+            respuesta = preguntar(self.texto_pdf, pregunta, client)
             self.answer_output.setPlainText(respuesta)
         else:
             self.answer_output.setPlainText("Por favor, carga un PDF primero.")
