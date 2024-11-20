@@ -1,0 +1,3 @@
+pyQt5
+groq
+pymupdf
